@@ -30,13 +30,13 @@ public class PreferencesEntityStoreTest
     public void assemble( ModuleAssembly module )
         throws AssemblyException
     {
-        module.layerAssembly().applicationAssembly().setName( "PreferencesTest" );
+        module.layer().application().setName( "PreferencesTest" );
 
         super.assemble( module );
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader( null );
         PreferencesEntityStoreInfo metaInfo = new PreferencesEntityStoreInfo( Preferences.userNodeForPackage( getClass() ) );
         Thread.currentThread().setContextClassLoader( cl );
-        module.addServices( PreferencesEntityStoreService.class ).setMetaInfo( metaInfo ).instantiateOnStartup();
+        module.services( PreferencesEntityStoreService.class ).setMetaInfo( metaInfo ).instantiateOnStartup();
     }
 }

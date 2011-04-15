@@ -31,37 +31,35 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.concurrent.locks.ReadWriteLock;
+import org.qi4j.api.common.Optional;
 import org.qi4j.api.configuration.Configuration;
 import org.qi4j.api.entity.EntityReference;
+import org.qi4j.api.injection.scope.Service;
 import org.qi4j.api.injection.scope.This;
-import org.qi4j.api.injection.scope.Uses;
 import org.qi4j.api.io.Input;
 import org.qi4j.api.io.Output;
 import org.qi4j.api.io.Receiver;
 import org.qi4j.api.io.Sender;
 import org.qi4j.api.service.Activatable;
 import org.qi4j.entitystore.map.MapEntityStore;
+import org.qi4j.library.fileconfig.FileConfiguration;
 import org.qi4j.spi.entity.EntityType;
 import org.qi4j.spi.entitystore.BackupRestore;
 import org.qi4j.spi.entitystore.EntityNotFoundException;
 import org.qi4j.spi.entitystore.EntityStoreException;
-import org.qi4j.spi.service.ServiceDescriptor;
 
 /**
- * JDBM implementation of SerializationStore
+ * JDBM implementation of MapEntityStore
  */
 public class FileEntityStoreMixin
     implements Activatable, MapEntityStore, BackupRestore
 {
-    @This
-    private ReadWriteLock lock;
+    @Optional
+    @Service
+    FileConfiguration fileConfiguration;
 
     @This
     private Configuration<FileEntityStoreConfiguration> config;
-
-    @Uses
-    private ServiceDescriptor descriptor;
 
     private File dataDirectory;
     private int slices;
@@ -73,13 +71,23 @@ public class FileEntityStoreMixin
         String pathName = config.configuration().directory().get();
         if( pathName == null )
         {
-            pathName = System.getProperty( "user.dir" ) + "/qi4j/filestore/";
+            if( fileConfiguration != null )
+            {
+                pathName = new File( fileConfiguration.dataDirectory(), config.configuration()
+                    .identity()
+                    .get() ).getAbsolutePath();
+            }
+            else
+            {
+                pathName = System.getProperty( "user.dir" ) + "/qi4j/filestore/";
+            }
         }
         File rootDirectory = new File( pathName ).getAbsoluteFile();
         dataDirectory = new File( rootDirectory, "data" );
         if( !dataDirectory.exists() )
         {
-            dataDirectory.mkdirs();
+            boolean success = dataDirectory.mkdirs();
+            new Object();
         }
         File slicesFile = new File( dataDirectory, "slices" );
         if( slicesFile.exists() )
@@ -262,12 +270,14 @@ public class FileEntityStoreMixin
     {
         return new Input<String, IOException>()
         {
-            public <ReceiverThrowableType extends Throwable> void transferTo( Output<String, ReceiverThrowableType> output )
+            @Override
+            public <ReceiverThrowableType extends Throwable> void transferTo( Output<? super String, ReceiverThrowableType> output )
                 throws IOException, ReceiverThrowableType
             {
                 output.receiveFrom( new Sender<String, IOException>()
                 {
-                    public <ReceiverThrowableType extends Throwable> void sendTo( Receiver<String, ReceiverThrowableType> receiver )
+                    @Override
+                    public <ReceiverThrowableType extends Throwable> void sendTo( Receiver<? super String, ReceiverThrowableType> receiver )
                         throws ReceiverThrowableType, IOException
                     {
                         for( File sliceDirectory : dataDirectory.listFiles() )
@@ -279,7 +289,7 @@ public class FileEntityStoreMixin
                             }
                         }
                     }
-                });
+                } );
             }
         };
     }
@@ -288,7 +298,8 @@ public class FileEntityStoreMixin
     {
         return new Output<String, IOException>()
         {
-            public <SenderThrowableType extends Throwable> void receiveFrom( Sender<String, SenderThrowableType> sender )
+            @Override
+            public <SenderThrowableType extends Throwable> void receiveFrom( Sender<? extends String, SenderThrowableType> sender )
                 throws IOException, SenderThrowableType
             {
                 sender.sendTo( new Receiver<String, IOException>()
@@ -301,7 +312,7 @@ public class FileEntityStoreMixin
                         byte[] stateArray = item.getBytes( "UTF-8" );
                         store( getDataFile( id ), stateArray );
                     }
-                });
+                } );
             }
         };
     }
@@ -310,12 +321,14 @@ public class FileEntityStoreMixin
     {
         return new Input<Reader, IOException>()
         {
-            public <ReceiverThrowableType extends Throwable> void transferTo( Output<Reader, ReceiverThrowableType> output )
+            @Override
+            public <ReceiverThrowableType extends Throwable> void transferTo( Output<? super Reader, ReceiverThrowableType> output )
                 throws IOException, ReceiverThrowableType
             {
                 output.receiveFrom( new Sender<Reader, IOException>()
                 {
-                    public <ReceiverThrowableType extends Throwable> void sendTo( Receiver<Reader, ReceiverThrowableType> receiver )
+                    @Override
+                    public <ReceiverThrowableType extends Throwable> void sendTo( Receiver<? super Reader, ReceiverThrowableType> receiver )
                         throws ReceiverThrowableType, IOException
                     {
                         for( File sliceDirectory : dataDirectory.listFiles() )
@@ -327,7 +340,7 @@ public class FileEntityStoreMixin
                             }
                         }
                     }
-                });
+                } );
             }
         };
     }
@@ -351,7 +364,7 @@ public class FileEntityStoreMixin
     private byte[] fetch( File dataFile )
         throws IOException
     {
-        byte[] buf = new byte[1000];
+        byte[] buf = new byte[ 1000 ];
         BufferedInputStream in = null;
         FileInputStream fis = null;
         try
@@ -397,7 +410,7 @@ public class FileEntityStoreMixin
         {
             fos = new FileOutputStream( dataFile, false );
             bos = new BufferedOutputStream( fos );
-            bos.write(stateArray);
+            bos.write( stateArray );
         }
         finally
         {

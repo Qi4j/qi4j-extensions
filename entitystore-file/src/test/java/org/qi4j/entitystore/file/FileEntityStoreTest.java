@@ -16,14 +16,11 @@
  */
 package org.qi4j.entitystore.file;
 
-import java.io.File;
-import org.junit.After;
-import org.junit.Test;
 import org.qi4j.api.common.Visibility;
-import org.qi4j.api.unitofwork.UnitOfWorkCompletionException;
 import org.qi4j.bootstrap.AssemblyException;
 import org.qi4j.bootstrap.ModuleAssembly;
 import org.qi4j.entitystore.memory.MemoryEntityStoreService;
+import org.qi4j.library.fileconfig.FileConfiguration;
 import org.qi4j.spi.uuid.UuidIdentityGeneratorService;
 import org.qi4j.test.entity.AbstractEntityStoreTest;
 
@@ -37,34 +34,10 @@ public class FileEntityStoreTest
         throws AssemblyException
     {
         super.assemble( module );
-        module.addServices( FileEntityStoreService.class, UuidIdentityGeneratorService.class );
+        module.services( FileConfiguration.class, FileEntityStoreService.class, UuidIdentityGeneratorService.class );
 
-        ModuleAssembly config = module.layerAssembly().moduleAssembly( "config" );
-        config.addEntities( FileEntityStoreConfiguration.class ).visibleIn( Visibility.layer );
-        config.addServices( MemoryEntityStoreService.class );
-    }
-
-    @Override
-    @After
-    public void tearDown()
-        throws Exception
-    {
-        super.tearDown();
-        File rootDirectory = new File( System.getProperty("user.dir"), "qi4j/filestore/" );
-        deleteDir( rootDirectory );
-    }
-
-    @SuppressWarnings( { "ResultOfMethodCallIgnored" } )
-    private void deleteDir( File dir )
-    {
-        File[] files = dir.listFiles();
-        for( File file : files )
-        {
-            if( file.isDirectory())
-                deleteDir( file );
-            else
-                file.delete();
-        }
-        dir.delete();
+        ModuleAssembly config = module.layer().module( "config" );
+        config.entities( FileEntityStoreConfiguration.class ).visibleIn( Visibility.layer );
+        config.services( MemoryEntityStoreService.class );
     }
 }

@@ -4,9 +4,9 @@ import java.util.List;
 import org.qi4j.api.common.Optional;
 import org.qi4j.api.configuration.ConfigurationComposite;
 import org.qi4j.api.property.Property;
-import sun.misc.JavaSecurityProtectionDomainAccess;
 
-public interface EhCacheConfiguration extends ConfigurationComposite
+public interface EhCacheConfiguration
+    extends ConfigurationComposite
 {
 
     @Optional
@@ -33,7 +33,8 @@ public interface EhCacheConfiguration extends ConfigurationComposite
     @Optional
     Property<Boolean> loggingEnabled();
 
-    /** Number of objects the ehCache should keep in memory.
+    /**
+     * Number of objects the ehCache should keep in memory.
      * Defaults to 1000
      *
      * @return The maximum number of elements to be kept in memory.

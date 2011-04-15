@@ -19,8 +19,10 @@ import org.qi4j.api.value.ValueBuilderFactory;
 import org.qi4j.api.value.ValueComposite;
 import org.qi4j.bootstrap.AssemblyException;
 import org.qi4j.bootstrap.ModuleAssembly;
+import org.qi4j.entitystore.memory.MemoryEntityStoreService;
 import org.qi4j.entitystore.prefs.assembly.PreferenceEntityStoreAssembler;
 import org.qi4j.index.rdf.assembly.RdfNativeSesameStoreAssembler;
+import org.qi4j.library.fileconfig.FileConfiguration;
 import org.qi4j.library.rdf.repository.NativeConfiguration;
 import org.qi4j.test.AbstractQi4jTest;
 import org.qi4j.test.EntityTestAssembler;
@@ -62,38 +64,19 @@ public class ContainsAllTest
     public void assemble( ModuleAssembly module )
         throws AssemblyException
     {
-        PreferenceEntityStoreAssembler pAss = new PreferenceEntityStoreAssembler( Visibility.module );
-        ModuleAssembly prefModule = module.layerAssembly().moduleAssembly( "PrefModule" );
-        prefModule.addEntities( NativeConfiguration.class ).visibleIn( Visibility.application );
-        pAss.assemble( prefModule );
+        module.services( FileConfiguration.class );
+        ModuleAssembly prefModule = module.layer().module( "PrefModule" );
+        prefModule.entities( NativeConfiguration.class ).visibleIn( Visibility.application );
+        prefModule.services( MemoryEntityStoreService.class );
 
-        module.addEntities( ExampleEntity.class );
-        module.addValues( ExampleValue.class, ExampleValue2.class );
+        module.entities( ExampleEntity.class );
+        module.values( ExampleValue.class, ExampleValue2.class );
 
         EntityTestAssembler testAss = new EntityTestAssembler();
         testAss.assemble( module );
 
         RdfNativeSesameStoreAssembler rdfAssembler = new RdfNativeSesameStoreAssembler();
         rdfAssembler.assemble( module );
-    }
-
-    // Override this in order to delete all indexing files.
-    @Override
-    public void tearDown()
-        throws Exception
-    {
-        UnitOfWork uow = this.unitOfWorkFactory.newUnitOfWork();
-        String dataDir = uow.get( NativeConfiguration.class, "rdf-indexing" ).dataDirectory().get();
-        uow.discard();
-
-        super.tearDown();
-
-        File f = new File( dataDir );
-        for( File sub : f.listFiles() )
-        {
-            sub.delete();
-        }
-        f.delete();
     }
 
     public static ExampleEntity createEntityWithStrings( UnitOfWork uow, ValueBuilderFactory vbf, String... strings )

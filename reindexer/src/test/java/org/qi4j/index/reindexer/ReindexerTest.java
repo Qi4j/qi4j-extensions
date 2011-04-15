@@ -59,15 +59,15 @@ public class ReindexerTest
         new RdfNativeSesameStoreAssembler().assemble( module );
 
         // Reindexer
-        module.addServices( ReindexerService.class );
+        module.services( ReindexerService.class );
 
         // Configuration
-        ModuleAssembly config = module.layerAssembly().moduleAssembly( "config" );
-        config.addServices( MemoryEntityStoreService.class );
-        config.addEntities( JdbmConfiguration.class, NativeConfiguration.class, ReindexerConfiguration.class ).visibleIn( Visibility.layer );
+        ModuleAssembly config = module.layer().module( "config" );
+        config.services( MemoryEntityStoreService.class );
+        config.entities( JdbmConfiguration.class, NativeConfiguration.class, ReindexerConfiguration.class ).visibleIn( Visibility.layer );
 
         // Test entity
-        module.addEntities( MyEntity.class );
+        module.entities( MyEntity.class );
 
     }
 
@@ -132,7 +132,7 @@ public class ReindexerTest
     private static boolean deleteEntitiesData()
     {
         boolean success = true;
-        File esDir = new File( "target/qi4j-entities" );
+        File esDir = new File( "build/testdata/qi4j-entities" );
         if ( esDir.exists() ) {
             success = FileUtil.deltree( esDir );
         }
@@ -142,7 +142,7 @@ public class ReindexerTest
     private static boolean deleteIndexData()
     {
         boolean success = true;
-        File rdfDir = new File( "target/qi4j-index" );
+        File rdfDir = new File( "build/testdata/qi4j-index" );
         if ( rdfDir.exists() ) {
             success = FileUtil.deltree( rdfDir );
         }

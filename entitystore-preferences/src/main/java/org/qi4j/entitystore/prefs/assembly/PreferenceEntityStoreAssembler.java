@@ -39,15 +39,15 @@ public class PreferenceEntityStoreAssembler
     public void assemble( ModuleAssembly module )
         throws AssemblyException
     {
-        String applicationName = module.layerAssembly().applicationAssembly().name();
+        String applicationName = module.layer().application().name();
 
         Preferences root = Preferences.userRoot();
         Preferences node = root.node( applicationName );
         PreferencesEntityStoreInfo info = new PreferencesEntityStoreInfo( node );
-        module.addServices( PreferencesEntityStoreService.class )
+        module.services( PreferencesEntityStoreService.class )
             .setMetaInfo( info )
             .visibleIn( visibility )
             .instantiateOnStartup();
-        module.addServices( UuidIdentityGeneratorService.class ).visibleIn( visibility );
+        module.services( UuidIdentityGeneratorService.class ).visibleIn( visibility );
     }
 }

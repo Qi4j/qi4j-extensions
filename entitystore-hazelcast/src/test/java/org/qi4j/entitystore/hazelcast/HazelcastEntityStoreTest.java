@@ -22,10 +22,10 @@ public class HazelcastEntityStoreTest
         throws AssemblyException
     {
         super.assemble( module );
-        module.addServices( HazelcastEntityStoreService.class, UuidIdentityGeneratorService.class );
-        ModuleAssembly config = module.layerAssembly().moduleAssembly( "config" );
-        config.addEntities( HazelcastConfiguration.class ).visibleIn( Visibility.layer );
-        config.addServices( MemoryEntityStoreService.class );
+        module.services( HazelcastEntityStoreService.class, UuidIdentityGeneratorService.class );
+        ModuleAssembly config = module.layer().module( "config" );
+        config.entities( HazelcastConfiguration.class ).visibleIn( Visibility.layer );
+        config.services( MemoryEntityStoreService.class );
     }
 
     @Test
