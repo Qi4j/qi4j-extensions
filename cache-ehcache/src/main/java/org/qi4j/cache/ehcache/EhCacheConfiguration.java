@@ -2,7 +2,6 @@ package org.qi4j.cache.ehcache;
 
 import java.util.List;
 import org.qi4j.api.common.Optional;
-import org.qi4j.api.common.UseDefaults;
 import org.qi4j.api.configuration.ConfigurationComposite;
 import org.qi4j.api.property.Property;
 
@@ -10,28 +9,28 @@ public interface EhCacheConfiguration
     extends ConfigurationComposite
 {
 
-    @Optional @UseDefaults
+    @Optional
     Property<Boolean> clearOnFlush();
 
-    @Optional @UseDefaults
+    @Optional
     Property<Integer> diskAccessStripes();
 
-    @Optional @UseDefaults
+    @Optional
     Property<Long> diskExpiryThreadIntervalSeconds();
 
-    @Optional @UseDefaults
+    @Optional
     Property<Boolean> diskPersistent();
 
-    @Optional @UseDefaults
+    @Optional
     Property<Integer> diskSpoolBufferSizeMB();
 
-    @Optional @UseDefaults
+    @Optional
     Property<String> diskStorePath();
 
-    @Optional @UseDefaults
+    @Optional
     Property<Boolean> eternal();
 
-    @Optional @UseDefaults
+    @Optional
     Property<Boolean> loggingEnabled();
 
     /**
@@ -40,39 +39,39 @@ public interface EhCacheConfiguration
      *
      * @return The maximum number of elements to be kept in memory.
      */
-    @Optional @UseDefaults
+    @Optional
     Property<Integer> maxElementsInMemory();
 
-    @Optional @UseDefaults
+    @Optional
     Property<Integer> maxElementsOnDisk();
 
-    @Optional @UseDefaults
+    @Optional
     Property<String> memoryStoreEvictionPolicy();
 
-    @Optional @UseDefaults
+    @Optional
     Property<String> name();
 
-    @Optional @UseDefaults
+    @Optional
     Property<Boolean> overflowToDisk();
 
-    @Optional @UseDefaults
+    @Optional
     Property<String> transactionalMode();
 
-    @Optional @UseDefaults
+    @Optional
     Property<Long> timeToLiveSeconds();
 
-    @Optional @UseDefaults
+    @Optional
     Property<Long> timeToIdleSeconds();
 
-    @Optional @UseDefaults
+    @Optional
     Property<String> cacheManagerName();
 
-    @Optional @UseDefaults
+    @Optional
     Property<String> monitoring();
 
-    @Optional @UseDefaults
+    @Optional
     Property<Boolean> updateCheck();
 
-    @Optional @UseDefaults
+    @Optional
     Property<List<String>> terracottaConfigURLs();
 }
