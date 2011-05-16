@@ -28,7 +28,7 @@ import org.qi4j.entitystore.qrm.entity.HasFirstName;
 import org.qi4j.entitystore.qrm.entity.HasLastName;
 import org.qi4j.entitystore.qrm.entity.PersonComposite;
 import org.qi4j.spi.entity.EntityState;
-import org.qi4j.test.AbstractQi4jTest;
+import org.qi4j.core.testsupport.AbstractQi4jTest;
 
 import static junit.framework.Assert.*;
 

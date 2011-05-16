@@ -13,11 +13,11 @@ import org.qi4j.api.unitofwork.NoSuchEntityException;
 import org.qi4j.api.unitofwork.UnitOfWork;
 import org.qi4j.bootstrap.AssemblyException;
 import org.qi4j.bootstrap.ModuleAssembly;
+import org.qi4j.core.testsupport.AbstractQi4jTest;
 import org.qi4j.entitystore.qrm.entity.Account;
 import org.qi4j.entitystore.qrm.entity.AccountComposite;
 import org.qi4j.entitystore.qrm.internal.QrmMapperService;
 import org.qi4j.spi.entitystore.EntityNotFoundException;
-import org.qi4j.test.AbstractQi4jTest;
 
 /**
  * User: alex

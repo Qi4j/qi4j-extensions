@@ -22,10 +22,10 @@ import org.qi4j.api.common.Visibility;
 import org.qi4j.api.unitofwork.UnitOfWorkCompletionException;
 import org.qi4j.bootstrap.AssemblyException;
 import org.qi4j.bootstrap.ModuleAssembly;
+import org.qi4j.core.testsupport.AbstractEntityStoreTest;
 import org.qi4j.entitystore.memory.MemoryEntityStoreService;
 import org.qi4j.library.fileconfig.FileConfiguration;
 import org.qi4j.spi.uuid.UuidIdentityGeneratorService;
-import org.qi4j.test.entity.AbstractEntityStoreTest;
 
 import java.io.File;
 

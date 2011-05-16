@@ -28,7 +28,7 @@ import org.qi4j.library.sql.ds.DBCPBasicDataSourceServiceMixin;
 import org.qi4j.library.sql.ds.DBCPDataSourceConfiguration;
 import org.qi4j.library.sql.ds.DataSourceService;
 import org.qi4j.library.sql.ds.DataSourceServiceComposite;
-import org.qi4j.test.AbstractQi4jTest;
+import org.qi4j.core.testsupport.AbstractQi4jTest;
 
 /**
  * @author Stanislav Muhametsin

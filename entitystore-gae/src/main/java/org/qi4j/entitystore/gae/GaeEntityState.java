@@ -23,20 +23,23 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.Text;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.qi4j.api.common.QualifiedName;
 import org.qi4j.api.common.TypeName;
 import org.qi4j.api.entity.EntityReference;
-import org.qi4j.api.structure.Module;
 import org.qi4j.spi.entity.EntityDescriptor;
 import org.qi4j.spi.entity.EntityState;
 import org.qi4j.spi.entity.EntityStatus;
 import org.qi4j.spi.entity.EntityType;
 import org.qi4j.spi.entity.ManyAssociationState;
+import org.qi4j.spi.entity.NamedAssociationState;
+import org.qi4j.spi.entity.association.NamedEntityReference;
 import org.qi4j.spi.property.PropertyType;
 import org.qi4j.spi.property.ValueType;
 import org.qi4j.spi.structure.ModuleSPI;
@@ -68,7 +71,7 @@ public class GaeEntityState
                             "    descriptor:" + descriptor + "\n  " +
                             "    entityType:" + entityType + "\n  " +
                             "    typeName:" + typeName + "\n  " +
-                            "    name:" + name + "\n  " 
+                            "    name:" + name + "\n  "
         );
         entity.setUnindexedProperty( PROPERTY_TYPE, name );
         status = EntityStatus.NEW;
@@ -186,8 +189,7 @@ public class GaeEntityState
                                  "\n          uri: " + uri +
                                  "\n         type: " + type +
                                  "\n        value: " + value +
-                                 "\n"
-                    ;
+                                 "\n";
                 InternalError error = new InternalError( message );
                 error.initCause( e );
                 throw error;
@@ -248,6 +250,14 @@ public class GaeEntityState
     {
         List<String> assocs = (List<String>) entity.getProperty( stateName.toURI() );
         ManyAssociationState state = new GaeManyAssociationState( this, assocs );
+        return state;
+    }
+
+    @Override
+    public NamedAssociationState getNamedAssociation( QualifiedName stateName )
+    {
+        Map<String,String> assocs = (Map<String, String>) entity.getProperty( stateName.toURI() );
+        NamedAssociationState state = new GaeNamedAssociationState( this, assocs );
         return state;
     }
 
@@ -320,6 +330,115 @@ public class GaeEntityState
                 result.add( new EntityReference( id ) );
             }
             return result.iterator();
+        }
+    }
+
+    private static class GaeNamedAssociationState
+        implements NamedAssociationState
+    {
+        private Map<String, String> assocs;
+        private final GaeEntityState entityState;
+
+        public GaeNamedAssociationState( GaeEntityState entityState, Map<String, String> listOfAssociations )
+        {
+            this.entityState = entityState;
+            if( listOfAssociations == null )
+            {
+                this.assocs = new HashMap<String, String>();
+            }
+            else
+            {
+                this.assocs = listOfAssociations;
+            }
+        }
+
+        public int count()
+        {
+            return assocs.size();
+        }
+
+        public String contains( EntityReference entityReference )
+        {
+            String lookingFor = entityReference.identity();
+            for( Map.Entry<String,String> entry : assocs.entrySet() )
+            {
+                if( lookingFor.equals( entry.getValue() ))
+                {
+                    return entry.getKey();
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public boolean containsKey( String name )
+        {
+            return assocs.containsKey( name );
+        }
+
+        public void put( String name, EntityReference entityReference )
+        {
+            System.out.println( "NICLAS::" + entityReference );
+            String identity = entityReference.identity();
+            System.out.println( "NICLAS::" + name );
+            System.out.println( "NICLAS::" + identity );
+            System.out.println( "NICLAS::" + assocs );
+            assocs.put( name, entityReference.identity() );
+            entityState.markUpdated();
+        }
+
+        public boolean remove( String name )
+        {
+            return assocs.remove( name ) != null;
+        }
+
+        public EntityReference get( String name )
+        {
+            String id = assocs.get( name );
+            return new EntityReference( id );
+        }
+
+        @Override
+        public Iterable<String> names()
+        {
+            return Collections.unmodifiableMap( assocs ).keySet();
+        }
+
+        public Iterator<NamedEntityReference> iterator()
+        {
+            return new NamedEntityReferenceIterator(assocs.entrySet().iterator());
+        }
+
+        private static class NamedEntityReferenceIterator
+            implements Iterator<NamedEntityReference>
+        {
+            private Iterator<Map.Entry<String, String>> iterator;
+
+            public NamedEntityReferenceIterator( Iterator<Map.Entry<String, String>> iterator )
+            {
+                this.iterator = iterator;
+            }
+
+            @Override
+            public boolean hasNext()
+            {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public NamedEntityReference next()
+            {
+                Map.Entry<String, String> next = iterator.next();
+                String name = next.getKey();
+                EntityReference ref = new EntityReference( next.getValue() );
+                return new NamedEntityReference( name, ref );
+            }
+
+            @Override
+            public void remove()
+            {
+                throw new UnsupportedOperationException();
+            }
         }
     }
 

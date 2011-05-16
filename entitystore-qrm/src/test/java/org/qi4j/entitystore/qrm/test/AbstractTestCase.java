@@ -22,13 +22,13 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Before;
+import org.qi4j.core.testsupport.AbstractQi4jTest;
 import org.qi4j.entitystore.qrm.DerbyDatabaseHandler;
 import org.qi4j.entitystore.qrm.entity.PersonComposite;
 import org.qi4j.spi.composite.TransientDescriptor;
 import org.qi4j.spi.entity.EntityState;
 import org.qi4j.spi.entity.QualifiedIdentity;
 import org.qi4j.spi.property.PropertyDescriptor;
-import org.qi4j.test.AbstractQi4jTest;
 
 import static org.junit.Assert.*;
 
