@@ -35,7 +35,8 @@ import org.qi4j.entitystore.voldemort.assembly.VoldemortAssembler;
 import voldemort.server.VoldemortConfig;
 import voldemort.server.VoldemortServer;
 
-public class VoldemortTest extends AbstractEntityStoreTest
+public class VoldemortTest
+    extends AbstractEntityStoreTest
 {
     private List<VoldemortServer> servers = new ArrayList<VoldemortServer>();
 
@@ -43,7 +44,7 @@ public class VoldemortTest extends AbstractEntityStoreTest
     public void setUp()
         throws Exception
     {
-        Thread.sleep(200);
+        Thread.sleep( 200 );
         File voldemortHome1 = setupVoldemortHome();
         startServer( voldemortHome1, "node0.properties" );
         File voldemortHome2 = setupVoldemortHome();
@@ -58,7 +59,14 @@ public class VoldemortTest extends AbstractEntityStoreTest
         super.tearDown();
         for( VoldemortServer server : servers )
         {
-            server.stop();
+            try
+            {
+                server.stop();
+            }
+            catch( Throwable e )
+            {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -112,5 +120,4 @@ public class VoldemortTest extends AbstractEntityStoreTest
         in.close();
         stream.close();
     }
-
 }

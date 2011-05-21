@@ -22,5 +22,9 @@ public class EhCacheAssembler
     {
         module.services( EhCachePoolService.class ).visibleIn( visibility );
         module.entities( EhCacheConfiguration.class );
+
+        EhCacheConfiguration defaults = module.forMixin( EhCacheConfiguration.class ).declareDefaults();
+        defaults.monitoring().set( "OFF" );
+        defaults.transactionalMode().set("OFF");
     }
 }
