@@ -3,7 +3,7 @@
   PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
   "http://ibatis.apache.org/dtd/sql-map-2.dtd">
 
-<sqlMap namespace="org.qi4j.test.entity.AbstractEntityStoreTest$TestEntity">
+<sqlMap namespace="org.qi4j.core.testsupport.AbstractEntityStoreTest$TestEntity">
   <select id="load" resultClass="java.util.HashMap">
     SELECT ID, NAME, UNSET_NAME as unsetName, SOME_VALUE as someValue, OTHER_VALUE as otherValue,
     ASSOC_ID as association, UNSET_ASSOC_ID as unsetAssociation

@@ -27,7 +27,7 @@ import org.qi4j.entitystore.sql.internal.SQLs;
 import org.qi4j.library.sql.common.SQLConfiguration;
 import org.qi4j.library.sql.common.SQLUtil;
 import org.qi4j.library.sql.ds.PGDataSourceConfiguration;
-import org.qi4j.test.entity.AbstractEntityStoreTest;
+import org.qi4j.core.testsupport.AbstractEntityStoreTest;
 
 /**
  * WARN This test is deactivated on purpose, please do not commit it activated.

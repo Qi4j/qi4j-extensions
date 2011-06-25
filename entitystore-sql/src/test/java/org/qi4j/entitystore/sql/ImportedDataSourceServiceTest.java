@@ -21,12 +21,12 @@ import org.junit.Assume;
 import org.junit.Test;
 import org.qi4j.bootstrap.AssemblyException;
 import org.qi4j.bootstrap.ModuleAssembly;
+import org.qi4j.core.testsupport.AbstractQi4jTest;
 import org.qi4j.entitystore.sql.assembly.DerbySQLEntityStoreAssembler;
 import org.qi4j.library.sql.common.SQLUtil;
 import org.qi4j.library.sql.ds.DataSourceService;
 import org.qi4j.library.sql.ds.assembly.DataSourceAssembler;
 import org.qi4j.library.sql.ds.assembly.ImportableDataSourceService;
-import org.qi4j.test.AbstractQi4jTest;
 
 /**
  * @author Stanislav Muhametsin

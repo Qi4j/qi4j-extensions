@@ -45,12 +45,15 @@ public class EhCachePoolMixin
 
     private <T> EhCacheImpl<T> createNewCache( String cacheId, Class<T> valueType )
     {
-        CacheConfiguration cc = createCacheConfiguration( cacheId );
+        net.sf.ehcache.Cache cache = cacheManager.getCache( cacheId );
+        if( cache == null )
+        {
+            CacheConfiguration cc = createCacheConfiguration( cacheId );
 
-        // TODO: We also need all the other Configurations that are possible, like cacheLoaderFactoryConfiguration
-        net.sf.ehcache.Cache cache = new net.sf.ehcache.Cache( cc );
-        cacheManager.addCache( cache );
-
+            // TODO: We also need all the other Configurations that are possible, like cacheLoaderFactoryConfiguration
+            cache = new net.sf.ehcache.Cache( cc );
+            cacheManager.addCache( cache );
+        }
         return new EhCacheImpl<T>( cacheId, cache, valueType );
     }
 

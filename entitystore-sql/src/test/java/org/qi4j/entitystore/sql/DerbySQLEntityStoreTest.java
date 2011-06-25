@@ -14,18 +14,17 @@
 package org.qi4j.entitystore.sql;
 
 import org.apache.derby.iapi.services.io.FileUtil;
-import org.junit.Ignore;
 import org.qi4j.api.common.Visibility;
 import org.qi4j.api.unitofwork.UnitOfWork;
 import org.qi4j.bootstrap.AssemblyException;
 import org.qi4j.bootstrap.ModuleAssembly;
+import org.qi4j.core.testsupport.AbstractEntityStoreTest;
 import org.qi4j.entitystore.memory.MemoryEntityStoreService;
 import org.qi4j.entitystore.sql.assembly.DerbySQLEntityStoreAssembler;
 import org.qi4j.entitystore.sql.internal.SQLs;
 import org.qi4j.library.sql.common.SQLConfiguration;
 import org.qi4j.library.sql.common.SQLUtil;
 import org.qi4j.library.sql.ds.DBCPDataSourceConfiguration;
-import org.qi4j.test.entity.AbstractEntityStoreTest;
 
 import java.sql.Connection;
 import java.sql.Statement;

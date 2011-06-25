@@ -162,7 +162,7 @@ public interface QrmMapperService
                                            desc,
                                            propState,
                                            null,
-                                           null );
+                                           null, null );
         }
 
         public boolean newEntity( Class mappedClazz, DefaultEntityState state, String version, long lastModified )
