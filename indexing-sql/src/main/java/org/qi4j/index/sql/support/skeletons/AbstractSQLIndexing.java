@@ -53,7 +53,6 @@ import org.qi4j.spi.Qi4jSPI;
 import org.qi4j.spi.entity.EntityState;
 import org.qi4j.spi.entity.EntityStatus;
 import org.qi4j.spi.entity.association.AssociationDescriptor;
-import org.qi4j.spi.entity.association.ManyAssociationDescriptor;
 import org.qi4j.spi.property.PropertyDescriptor;
 import org.qi4j.spi.value.ValueDescriptor;
 import org.sql.generation.api.grammar.builders.modification.ColumnSourceByValuesBuilder;
@@ -511,7 +510,7 @@ public class AbstractSQLIndexing
             }
         }
 
-        for( ManyAssociationDescriptor mDesc : state.entityDescriptor().state().manyAssociations() )
+        for( AssociationDescriptor mDesc : state.entityDescriptor().state().manyAssociations() )
         {
             if( SQLUtil.isQueryable( mDesc.accessor() ) )
             {

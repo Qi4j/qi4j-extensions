@@ -62,7 +62,6 @@ import org.qi4j.spi.entity.EntityState;
 import org.qi4j.spi.entity.EntityStatus;
 import org.qi4j.spi.entity.EntityType;
 import org.qi4j.spi.entity.association.AssociationDescriptor;
-import org.qi4j.spi.entity.association.ManyAssociationDescriptor;
 import org.qi4j.spi.entitystore.DefaultEntityStoreUnitOfWork;
 import org.qi4j.spi.entitystore.EntityNotFoundException;
 import org.qi4j.spi.entitystore.EntityStore;
@@ -385,7 +384,7 @@ public class SQLEntityStoreMixin
 
             JSONObject manyAssocs = jsonObject.getJSONObject( "manyassociations" );
             Map<QualifiedName, List<EntityReference>> manyAssociations = new HashMap<QualifiedName, List<EntityReference>>();
-            for( ManyAssociationDescriptor manyAssociationType : entityDescriptor.state().manyAssociations() )
+            for( AssociationDescriptor manyAssociationType : entityDescriptor.state().manyAssociations() )
             {
                 List<EntityReference> references = new ArrayList<EntityReference>();
                 try

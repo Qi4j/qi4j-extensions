@@ -23,13 +23,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.qi4j.api.common.QualifiedName;
+import org.qi4j.api.common.TypeName;
 import org.qi4j.entitystore.qrm.IdentifierConverter;
 import org.qi4j.spi.entity.EntityStatus;
 import org.qi4j.spi.entity.EntityType;
 import org.qi4j.spi.entity.QualifiedIdentity;
 import org.qi4j.spi.entity.association.AssociationDescriptor;
 import org.qi4j.spi.entity.association.AssociationType;
-import org.qi4j.spi.entity.association.ManyAssociationType;
 import org.qi4j.spi.entitystore.EntityNotFoundException;
 import org.qi4j.spi.property.PropertyDescriptor;
 import org.qi4j.spi.property.PropertyType;
@@ -112,10 +112,10 @@ public final class QrmEntityState
             }
         }
 
-        for( final ManyAssociationType associationDescriptor : stateDescriptor.manyAssociations() )
+        for( final AssociationType associationDescriptor : stateDescriptor.manyAssociations() )
         {
             final QualifiedName qualifiedName = associationDescriptor.qualifiedName();
-            final String typeName = associationDescriptor.type();
+            final TypeName typeName = associationDescriptor.type();
             Collection<String> identifiers = (Collection<String>) identifierConverter.getValueFromData( rawData, qualifiedName );
             if( identifiers != null && !identifiers.isEmpty() )
             {
@@ -125,8 +125,8 @@ public final class QrmEntityState
     }
 
     private Collection<QualifiedIdentity> createQualifiedIdentities( final Collection<String> identifiers,
-                                                                     final String typeName,
-                                                                     ManyAssociationType associationType
+                                                                     final TypeName typeName,
+                                                                     AssociationType associationType
     )
     {
         final int size = identifiers.size();
@@ -139,7 +139,7 @@ public final class QrmEntityState
     }
 
     private Collection<QualifiedIdentity> createManyAssociationCollection( int size,
-                                                                           ManyAssociationType associationType
+                                                                           AssociationType associationType
     )
     {
         return new ArrayList<QualifiedIdentity>( size );

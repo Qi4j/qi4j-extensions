@@ -42,8 +42,6 @@ import org.qi4j.spi.entity.EntityType;
 import org.qi4j.spi.entity.ManyAssociationState;
 import org.qi4j.spi.entity.association.AssociationDescriptor;
 import org.qi4j.spi.entity.association.AssociationType;
-import org.qi4j.spi.entity.association.ManyAssociationDescriptor;
-import org.qi4j.spi.entity.association.ManyAssociationType;
 import org.qi4j.spi.entitystore.DefaultEntityStoreUnitOfWork;
 import org.qi4j.spi.entitystore.EntityStore;
 import org.qi4j.spi.entitystore.EntityStoreException;
@@ -379,7 +377,7 @@ public class PreferencesEntityStoreMixin
             if( !entityDescriptor.state().manyAssociations().isEmpty() )
             {
                 Preferences manyAssocs = entityPrefs.node( "manyassociations" );
-                for( ManyAssociationDescriptor manyAssociationType : entityDescriptor.state().manyAssociations() )
+                for( AssociationDescriptor manyAssociationType : entityDescriptor.state().manyAssociations() )
                 {
                     List<EntityReference> references = new ArrayList<EntityReference>();
                     String entityReferences = manyAssocs.get( manyAssociationType.qualifiedName().name(), null );
@@ -579,7 +577,7 @@ public class PreferencesEntityStoreMixin
             if( !entityType.manyAssociations().isEmpty() )
             {
                 Preferences manyAssocsPrefs = entityPrefs.node( "manyassociations" );
-                for( ManyAssociationType manyAssociationType : entityType.manyAssociations() )
+                for( AssociationType manyAssociationType : entityType.manyAssociations() )
                 {
                     String manyAssocs = "";
                     ManyAssociationState manyAssoc = state.getManyAssociation( manyAssociationType.qualifiedName() );
