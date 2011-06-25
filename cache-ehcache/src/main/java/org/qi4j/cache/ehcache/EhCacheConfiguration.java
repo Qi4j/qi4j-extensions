@@ -72,7 +72,4 @@ public interface EhCacheConfiguration
 
     @Optional @UseDefaults
     Property<Boolean> updateCheck();
-
-    @Optional @UseDefaults
-    Property<List<String>> terracottaConfigURLs();
 }

@@ -1,10 +1,8 @@
 package org.qi4j.cache.ehcache;
 
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
-import net.sf.ehcache.config.TerracottaConfigConfiguration;
 import org.qi4j.api.common.Optional;
 import org.qi4j.api.configuration.Configuration;
 import org.qi4j.api.injection.scope.This;
@@ -73,13 +71,10 @@ public class EhCachePoolMixin
         net.sf.ehcache.config.Configuration configuration = new net.sf.ehcache.config.Configuration();
         EhCacheConfiguration conf = config.configuration();
         Boolean updateCheck = conf.updateCheck().get();
-        if( updateCheck != null )
-        {
-            configuration.setUpdateCheck( updateCheck );
-        }
+        configuration.setUpdateCheck( updateCheck );
         configuration.setDynamicConfig( true );
-        String monitoring = conf.monitoring().get();
-        if( monitoring != null )
+        String monitoring = conf.monitoring().get().trim();
+        if( monitoring.length() > 0 )
         {
             configuration.setMonitoring( monitoring );
         }
@@ -89,16 +84,6 @@ public class EhCachePoolMixin
             name = "Qi4j Cache Extension";
         }
         configuration.setName( name );
-        List<String> terracottaConfigURLs = conf.terracottaConfigURLs().get();
-        if( terracottaConfigURLs != null )
-        {
-            for( String terracottaURL : terracottaConfigURLs )
-            {
-                TerracottaConfigConfiguration terracottaConfig = new TerracottaConfigConfiguration();
-                terracottaConfig.setUrl( terracottaURL );
-                configuration.addTerracottaConfig( terracottaConfig );
-            }
-        }
         CacheConfiguration cc = createCacheConfiguration( "qi4j.ehcache.config.default" );
         configuration.setDefaultCacheConfiguration( cc );
         cacheManager = new CacheManager( configuration );
@@ -114,47 +99,44 @@ public class EhCachePoolMixin
     {
         EhCacheConfiguration conf = config.configuration();
         Integer maxElementsInMemory = conf.maxElementsInMemory().get();
-        if( maxElementsInMemory == null )
+        if( maxElementsInMemory <= 0 )
         {
-            maxElementsInMemory = 1000;
+            maxElementsInMemory = 10000;
         }
         CacheConfiguration cc = new CacheConfiguration( cacheId, maxElementsInMemory );
         String transactionalMode = conf.transactionalMode().get();
-        if( transactionalMode != null )
+        if( transactionalMode.length() > 0 )
         {
             cc.transactionalMode( transactionalMode );
         }
 
         Long timeToLiveSeconds = conf.timeToLiveSeconds().get();
-        if( timeToLiveSeconds != null )
+        if( timeToLiveSeconds > 0 )
         {
             cc.timeToLiveSeconds( timeToLiveSeconds );
         }
 
         Long timeToIdleSeconds = conf.timeToIdleSeconds().get();
-        if( timeToIdleSeconds != null )
+        if( timeToIdleSeconds > 0 )
         {
             cc.timeToIdleSeconds( timeToIdleSeconds );
         }
 
         Boolean overflowToDisk = conf.overflowToDisk().get();
-        if( overflowToDisk != null )
-        {
-            cc.overflowToDisk( overflowToDisk );
-        }
+        cc.overflowToDisk( overflowToDisk );
         String name = conf.name().get();
-        if( name != null )
+        if( name.length() > 0 )
 
         {
             cc.name( name );
         }
         String memoryStoreEvictionPolicy = conf.memoryStoreEvictionPolicy().get();
-        if( memoryStoreEvictionPolicy != null )
+        if( memoryStoreEvictionPolicy.length() > 0 )
         {
             cc.memoryStoreEvictionPolicy( memoryStoreEvictionPolicy );
         }
         Integer maxElementsOnDisk = conf.maxElementsOnDisk().get();
-        if( maxElementsOnDisk != null )
+        if( maxElementsOnDisk > 0 )
         {
             cc.maxElementsOnDisk( maxElementsOnDisk );
         }
@@ -164,40 +146,31 @@ public class EhCachePoolMixin
 //            cc.loggingEnabled( loggingEnabled );
 //        }
         Boolean eternal = conf.eternal().get();
-        if( eternal != null )
-        {
-            cc.eternal( eternal );
-        }
+        cc.eternal( eternal );
         String diskStorePath = conf.diskStorePath().get();
-        if( diskStorePath != null )
+        if( diskStorePath.length() > 0 )
         {
             cc.diskStorePath( diskStorePath );
         }
         Integer diskSpoolBufferSizeMB = conf.diskSpoolBufferSizeMB().get();
-        if( diskSpoolBufferSizeMB != null )
+        if( diskSpoolBufferSizeMB > 0 )
         {
             cc.diskSpoolBufferSizeMB( diskSpoolBufferSizeMB );
         }
         Boolean diskPersistent = conf.diskPersistent().get();
-        if( diskPersistent != null )
-        {
-            cc.diskPersistent( diskPersistent );
-        }
+        cc.diskPersistent( diskPersistent );
         Long diskExpiryThreadIntervalSeconds = conf.diskExpiryThreadIntervalSeconds().get();
-        if( diskExpiryThreadIntervalSeconds != null )
+        if( diskExpiryThreadIntervalSeconds > 0 )
         {
             cc.diskExpiryThreadIntervalSeconds( diskExpiryThreadIntervalSeconds );
         }
         Integer diskAccessStripes = conf.diskAccessStripes().get();
-        if( diskAccessStripes != null )
+        if( diskAccessStripes > 0 )
         {
             cc.diskAccessStripes( diskAccessStripes );
         }
         Boolean clearOnFlush = conf.clearOnFlush().get();
-        if( clearOnFlush != null )
-        {
-            cc.clearOnFlush( clearOnFlush );
-        }
+        cc.clearOnFlush( clearOnFlush );
         return cc;
     }
 }
