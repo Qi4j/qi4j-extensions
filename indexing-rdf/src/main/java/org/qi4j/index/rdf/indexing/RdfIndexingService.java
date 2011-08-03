@@ -36,6 +36,7 @@ import org.qi4j.api.injection.scope.Service;
 import org.qi4j.api.injection.scope.Uses;
 import org.qi4j.api.mixin.Mixins;
 import org.qi4j.api.service.Activatable;
+import org.qi4j.api.service.ServiceReference;
 import org.qi4j.library.rdf.entity.EntityStateSerializer;
 import org.qi4j.library.rdf.entity.EntityTypeSerializer;
 import org.qi4j.spi.entity.EntityState;
@@ -56,7 +57,7 @@ public interface RdfIndexingService
         implements RdfIndexingService, Activatable
     {
         @Service
-        private Repository repository;
+        private ServiceReference<Repository> repository;
 
         @Uses
         private EntityStateSerializer stateSerializer;
@@ -82,11 +83,11 @@ public interface RdfIndexingService
         {
             try
             {
-                if( repository == null ) // has been shut down...
+                if( repository == null || !repository.isActive() ) // has been shut down, or not yet started...
                 {
                     return;
                 }
-                final RepositoryConnection connection = repository.getConnection();
+                final RepositoryConnection connection = repository.get().getConnection();
                 // The Repository is being initialized and not ready yet.
                 // This happens when the Repository is being initialized and it is accessing its own configuration.
                 if( connection == null )
@@ -98,40 +99,13 @@ public interface RdfIndexingService
                 {
                     removeEntityStates( entityStates, connection );
                     connection.commit();
-
-                    // Figure out what to update
-                    final Set<EntityType> entityTypes = new HashSet<EntityType>();
-                    for( EntityState entityState : entityStates )
-                    {
-                        if( entityState.status().equals( EntityStatus.UPDATED ) )
-                        {
-                            indexEntityState( entityState, connection );
-                            entityTypes.add( entityState.entityDescriptor().entityType() );
-                        }
-                        else if( entityState.status().equals( EntityStatus.NEW ) )
-                        {
-                            indexEntityState( entityState, connection );
-                            entityTypes.add( entityState.entityDescriptor().entityType() );
-                        }
-                    }
-
-                    // Index new types
-                    for( EntityType entityType : entityTypes )
-                    {
-                        if( !indexedEntityTypes.contains( entityType ) )
-                        {
-                            indexEntityType( entityType, connection );
-                            indexedEntityTypes.add( entityType );
-                        }
-                    }
+                    final Set<EntityType> entityTypes = indexUpdates( entityStates, connection );
+                    indexNewTypes( connection, entityTypes );
                 }
                 finally
                 {
-                    if( connection != null )
-                    {
-                        connection.commit();
-                        connection.close();
-                    }
+                    connection.commit();
+                    connection.close();
                 }
             }
             catch( Throwable e )
@@ -139,6 +113,41 @@ public interface RdfIndexingService
                 e.printStackTrace();
                 //TODO What shall we do with the exception?
             }
+        }
+
+        private void indexNewTypes( RepositoryConnection connection, Set<EntityType> entityTypes )
+            throws RepositoryException
+        {
+            // Index new types
+            for( EntityType entityType : entityTypes )
+            {
+                if( !indexedEntityTypes.contains( entityType ) )
+                {
+                    indexEntityType( entityType, connection );
+                    indexedEntityTypes.add( entityType );
+                }
+            }
+        }
+
+        private Set<EntityType> indexUpdates( Iterable<EntityState> entityStates, RepositoryConnection connection )
+            throws RepositoryException
+        {
+            // Figure out what to update
+            final Set<EntityType> entityTypes = new HashSet<EntityType>();
+            for( EntityState entityState : entityStates )
+            {
+                if( entityState.status().equals( EntityStatus.UPDATED ) )
+                {
+                    indexEntityState( entityState, connection );
+                    entityTypes.add( entityState.entityDescriptor().entityType() );
+                }
+                else if( entityState.status().equals( EntityStatus.NEW ) )
+                {
+                    indexEntityState( entityState, connection );
+                    entityTypes.add( entityState.entityDescriptor().entityType() );
+                }
+            }
+            return entityTypes;
         }
 
         private void removeEntityStates( Iterable<EntityState> entityStates, RepositoryConnection connection )
@@ -159,7 +168,7 @@ public interface RdfIndexingService
 
             if( !removedStates.isEmpty() )
             {
-                Resource[] resources = removedStates.toArray( new Resource[removedStates.size()] );
+                Resource[] resources = removedStates.toArray( new Resource[ removedStates.size() ] );
                 connection.remove( null, null, null, resources );
             }
         }
@@ -198,14 +207,14 @@ public interface RdfIndexingService
         {
             if( valueFactory == null )
             {
-                valueFactory = repository.getValueFactory();
+                valueFactory = repository.get().getValueFactory();
             }
             return valueFactory;
         }
 
         public File dataDir()
         {
-            return repository.getDataDir();
+            return repository.get().getDataDir();
         }
     }
 }
