@@ -19,7 +19,7 @@ import org.qi4j.bootstrap.AssemblyException;
 import org.qi4j.bootstrap.ModuleAssembly;
 import org.qi4j.entitystore.prefs.PreferencesEntityStoreInfo;
 import org.qi4j.entitystore.prefs.PreferencesEntityStoreService;
-import org.qi4j.test.entity.AbstractEntityStoreTest;
+import org.qi4j.core.testsupport.AbstractEntityStoreTest;
 
 /**
  * JAVADOC

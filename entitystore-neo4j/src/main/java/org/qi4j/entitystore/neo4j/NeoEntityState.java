@@ -17,6 +17,7 @@ import org.qi4j.spi.entity.EntityDescriptor;
 import org.qi4j.spi.entity.EntityState;
 import org.qi4j.spi.entity.EntityStatus;
 import org.qi4j.spi.entity.ManyAssociationState;
+import org.qi4j.spi.entity.NamedAssociationState;
 import org.qi4j.spi.entitystore.EntityStoreException;
 import org.qi4j.spi.entitystore.EntityStoreUnitOfWork;
 import org.qi4j.spi.property.PropertyType;
@@ -49,13 +50,18 @@ public class NeoEntityState
             status = EntityStatus.UPDATED;
             Long version = (Long) underlyingNode.getProperty( VERSION );
             underlyingNode.setProperty( VERSION, version + 1 );
-            underlyingNode.setProperty( MODIFIED, System.currentTimeMillis() );
+            underlyingNode.setProperty( MODIFIED, uow.currentTime() );
         }
     }
 
     static RelationshipType manyAssociation( QualifiedName stateName )
     {
         return DynamicRelationshipType.withName( "many_association::" + stateName.toString() );
+    }
+
+    static RelationshipType namedAssociation( QualifiedName stateName )
+    {
+        return DynamicRelationshipType.withName( "named_association::" + stateName.toString() );
     }
 
     static RelationshipType association( QualifiedName stateName )
@@ -75,6 +81,21 @@ public class NeoEntityState
         node.setProperty( NeoManyAssociationState.COUNT, 0 );
         underlyingNode.createRelationshipTo( node, manyAssociation );
         return new NeoManyAssociationState( uow, this, node );
+    }
+
+    @Override
+    public NamedAssociationState getNamedAssociation( QualifiedName stateName )
+    {
+        RelationshipType namedAssociation = namedAssociation( stateName );
+        Relationship rel = underlyingNode.getSingleRelationship( namedAssociation, Direction.OUTGOING );
+        if( rel != null )
+        {
+            return new NeoNamedAssociationState( uow, this, rel.getEndNode() );
+        }
+        Node node = uow.getNeo().createNode();
+        node.setProperty( NeoManyAssociationState.COUNT, 0 );
+        underlyingNode.createRelationshipTo( node, namedAssociation );
+        return new NeoNamedAssociationState( uow, this, node );
     }
 
     public EntityReference getAssociation( QualifiedName stateName )

@@ -62,7 +62,6 @@ import org.qi4j.spi.entity.EntityState;
 import org.qi4j.spi.entity.EntityStatus;
 import org.qi4j.spi.entity.EntityType;
 import org.qi4j.spi.entity.association.AssociationDescriptor;
-import org.qi4j.spi.entity.association.ManyAssociationDescriptor;
 import org.qi4j.spi.entitystore.DefaultEntityStoreUnitOfWork;
 import org.qi4j.spi.entitystore.EntityNotFoundException;
 import org.qi4j.spi.entitystore.EntityStore;
@@ -121,8 +120,7 @@ public class SQLEntityStoreMixin
         database.stopDatabase();
     }
 
-    public StateCommitter applyChanges( EntityStoreUnitOfWork unitofwork, final Iterable<EntityState> states,
-                                        final String version, final long lastModified )
+    public StateCommitter applyChanges( final EntityStoreUnitOfWork unitofwork, final Iterable<EntityState> states )
     {
         return new StateCommitter()
         {
@@ -152,20 +150,20 @@ public class SQLEntityStoreMixin
                         else
                         {
                             StringWriter writer = new StringWriter();
-                            writeEntityState( defState, writer, version );
+                            writeEntityState( defState, writer, unitofwork.identity() );
                             writer.flush();
                             if( EntityStatus.UPDATED.equals( status ) )
                             {
                                 Long entityOptimisticLock = ( (SQLEntityState) state ).getEntityOptimisticLock();
                                 database.populateUpdateEntityStatement( updatePS, entityPK, entityOptimisticLock,
                                                                         defState.identity(), writer.toString(),
-                                                                        lastModified );
+                                                                        unitofwork.currentTime() );
                                 updatePS.addBatch();
                             }
                             else if( EntityStatus.NEW.equals( status ) )
                             {
                                 database.populateInsertEntityStatement( insertPS, entityPK, defState.identity(),
-                                                                        writer.toString(), lastModified );
+                                                                        writer.toString(), unitofwork.currentTime() );
                                 insertPS.addBatch();
                             }
                         }
@@ -235,9 +233,9 @@ public class SQLEntityStoreMixin
                                           null );
     }
 
-    public EntityStoreUnitOfWork newUnitOfWork( Usecase usecase, ModuleSPI module )
+    public EntityStoreUnitOfWork newUnitOfWork( Usecase usecase, ModuleSPI module, long currentTime )
     {
-        return new DefaultEntityStoreUnitOfWork( entityStoreSPI, newUnitOfWorkId(), module, usecase );
+        return new DefaultEntityStoreUnitOfWork( entityStoreSPI, newUnitOfWorkId(), module, usecase, currentTime );
     }
 
     public Input<EntityState, EntityStoreException> entityStates( final ModuleSPI module )
@@ -258,7 +256,7 @@ public class SQLEntityStoreMixin
                         UsecaseBuilder builder = UsecaseBuilder.buildUsecase( "qi4j.entitystore.sql.visit" );
                         Usecase usecase = builder.with( CacheOptions.NEVER ).newUsecase();
                         final DefaultEntityStoreUnitOfWork uow = new DefaultEntityStoreUnitOfWork( entityStoreSPI, newUnitOfWorkId(),
-                                                                                                   module, usecase );
+                                                                                                   module, usecase, System.currentTimeMillis() );
                         try
                         {
                             connection = database.getConnection();
@@ -384,38 +382,86 @@ public class SQLEntityStoreMixin
                 }
             }
 
-            JSONObject manyAssocs = jsonObject.getJSONObject( "manyassociations" );
-            Map<QualifiedName, List<EntityReference>> manyAssociations = new HashMap<QualifiedName, List<EntityReference>>();
-            for( ManyAssociationDescriptor manyAssociationType : entityDescriptor.state().manyAssociations() )
-            {
-                List<EntityReference> references = new ArrayList<EntityReference>();
-                try
-                {
-                    JSONArray jsonValues = manyAssocs.getJSONArray( manyAssociationType.qualifiedName().name() );
-                    for( int i = 0; i < jsonValues.length(); i++ )
-                    {
-                        Object jsonValue = jsonValues.getString( i );
-                        EntityReference value = jsonValue == JSONObject.NULL ? null : EntityReference.parseEntityReference(
-                            (String) jsonValue );
-                        references.add( value );
-                    }
-                    manyAssociations.put( manyAssociationType.qualifiedName(), references );
-                }
-                catch( JSONException e )
-                {
-                    // ManyAssociation not found, default to empty one
-                    manyAssociations.put( manyAssociationType.qualifiedName(), references );
-                }
-            }
+            Map<QualifiedName, List<EntityReference>> manyAssociations = createManyAssociations( jsonObject, entityDescriptor );
+            Map<QualifiedName, Map<String,EntityReference>> namedAssociations = createNamedAssociations( jsonObject, entityDescriptor );
 
             return new DefaultEntityState( unitOfWork, version, modified,
                                            EntityReference.parseEntityReference( identity ), status, entityDescriptor,
-                                           properties, associations, manyAssociations );
+                                           properties, associations, manyAssociations, namedAssociations );
         }
         catch( JSONException e )
         {
             throw new EntityStoreException( e );
         }
+    }
+
+    private Map<QualifiedName, List<EntityReference>> createManyAssociations( JSONObject jsonObject,
+                                                                              EntityDescriptor entityDescriptor
+    )
+        throws JSONException
+    {
+        JSONObject manyAssocs = jsonObject.getJSONObject( "manyassociations" );
+        Map<QualifiedName, List<EntityReference>> manyAssociations = new HashMap<QualifiedName, List<EntityReference>>();
+        for( AssociationDescriptor manyAssociationType : entityDescriptor.state().manyAssociations() )
+        {
+            List<EntityReference> references = new ArrayList<EntityReference>();
+            try
+            {
+                JSONArray jsonValues = manyAssocs.getJSONArray( manyAssociationType.qualifiedName().name() );
+                for( int i = 0; i < jsonValues.length(); i++ )
+                {
+                    Object jsonValue = jsonValues.getString( i );
+                    EntityReference value = jsonValue == JSONObject.NULL ? null : EntityReference.parseEntityReference(
+                        (String) jsonValue );
+                    references.add( value );
+                }
+                manyAssociations.put( manyAssociationType.qualifiedName(), references );
+            }
+            catch( JSONException e )
+            {
+                // ManyAssociation not found, default to empty one
+                manyAssociations.put( manyAssociationType.qualifiedName(), references );
+            }
+        }
+        return manyAssociations;
+    }
+
+    private Map<QualifiedName, Map<String, EntityReference>> createNamedAssociations( JSONObject jsonObject,
+                                                                                      EntityDescriptor entityDescriptor
+    )
+        throws JSONException
+    {
+        JSONObject namedAssocs = jsonObject.getJSONObject( "namedassociations" );
+        Map<QualifiedName, Map<String,EntityReference>> namedAssociations = new HashMap<QualifiedName, Map<String, EntityReference>>();
+        for( AssociationDescriptor namedAssociationType : entityDescriptor.state().namedAssociations() )
+        {
+            Map<String,EntityReference> references = new HashMap<String, EntityReference>();
+            try
+            {
+                JSONObject jsonValues = namedAssocs.getJSONObject( namedAssociationType.qualifiedName().name() );
+                for( String name : jsonValues )
+                {
+                    Object jsonValue = jsonValues.getString( name );
+                    EntityReference value;
+                    if( jsonValue == JSONObject.NULL )
+                    {
+                        value = null;
+                    }
+                    else
+                    {
+                        value = EntityReference.parseEntityReference((String) jsonValue );
+                    }
+                    references.put( name, value );
+                }
+                namedAssociations.put( namedAssociationType.qualifiedName(), references );
+            }
+            catch( JSONException e )
+            {
+                // NamedAssociation not found, default to empty one
+                namedAssociations.put( namedAssociationType.qualifiedName(), references );
+            }
+        }
+        return namedAssociations;
     }
 
     public JSONObject getState( String id )
@@ -512,6 +558,18 @@ public class SQLEntityStoreMixin
                     assocs.value( entityReference.identity() );
                 }
                 assocs.endArray();
+            }
+
+            JSONWriter namedAssociations = associations.endObject().key( "namedassociations" ).object();
+            for( Map.Entry<QualifiedName, Map<String,EntityReference>> stateNameListEntry : state.namedAssociations().entrySet() )
+            {
+                JSONWriter assocs = namedAssociations.key( stateNameListEntry.getKey().name() ).object();
+                Map<String, EntityReference> value = stateNameListEntry.getValue();
+                for( Map.Entry<String,EntityReference> entry : value.entrySet() )
+                {
+                    assocs.key( entry.getKey() ).value( entry.getValue() );
+                }
+                assocs.endObject();
             }
             manyAssociations.endObject().endObject();
         }

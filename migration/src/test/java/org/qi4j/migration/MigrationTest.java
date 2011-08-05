@@ -38,7 +38,7 @@ import org.qi4j.migration.assembly.MigrationBuilder;
 import org.qi4j.migration.assembly.MigrationOperation;
 import org.qi4j.spi.entitystore.BackupRestore;
 import org.qi4j.spi.service.importer.NewObjectImporter;
-import org.qi4j.test.AbstractQi4jTest;
+import org.qi4j.core.testsupport.AbstractQi4jTest;
 import org.qi4j.test.EntityTestAssembler;
 
 import static org.junit.Assert.*;

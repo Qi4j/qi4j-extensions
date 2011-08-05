@@ -40,10 +40,10 @@ import org.qi4j.spi.entity.EntityState;
 import org.qi4j.spi.entity.EntityStatus;
 import org.qi4j.spi.entity.EntityType;
 import org.qi4j.spi.entity.ManyAssociationState;
+import org.qi4j.spi.entity.NamedAssociationState;
 import org.qi4j.spi.entity.association.AssociationDescriptor;
 import org.qi4j.spi.entity.association.AssociationType;
-import org.qi4j.spi.entity.association.ManyAssociationDescriptor;
-import org.qi4j.spi.entity.association.ManyAssociationType;
+import org.qi4j.spi.entity.association.NamedEntityReference;
 import org.qi4j.spi.entitystore.DefaultEntityStoreUnitOfWork;
 import org.qi4j.spi.entitystore.EntityStore;
 import org.qi4j.spi.entitystore.EntityStoreException;
@@ -149,9 +149,9 @@ public class PreferencesEntityStoreMixin
         reloadExecutor.awaitTermination( 10, TimeUnit.SECONDS );
     }
 
-    public EntityStoreUnitOfWork newUnitOfWork( Usecase usecase, ModuleSPI module )
+    public EntityStoreUnitOfWork newUnitOfWork( Usecase usecase, ModuleSPI module, long currentTime )
     {
-        return new DefaultEntityStoreUnitOfWork( entityStoreSpi, newUnitOfWorkId(), module, usecase );
+        return new DefaultEntityStoreUnitOfWork( entityStoreSpi, newUnitOfWorkId(), module, usecase, currentTime );
     }
 
     public Input<EntityState, EntityStoreException> entityStates( final ModuleSPI module )
@@ -169,8 +169,7 @@ public class PreferencesEntityStoreMixin
                         UsecaseBuilder builder = UsecaseBuilder.buildUsecase( "qi4j.entitystore.preferences.visit" );
                         Usecase visitUsecase = builder.with( CacheOptions.NEVER ).newUsecase();
                         final DefaultEntityStoreUnitOfWork uow = new DefaultEntityStoreUnitOfWork( entityStoreSpi, newUnitOfWorkId(),
-                                                                                                   module, visitUsecase
-                        );
+                                                                                                   module, visitUsecase, System.currentTimeMillis());
 
                         try
                         {
@@ -193,8 +192,7 @@ public class PreferencesEntityStoreMixin
 
     public EntityState newEntityState( EntityStoreUnitOfWork unitOfWork,
                                        EntityReference identity,
-                                       EntityDescriptor entityDescriptor
-    )
+                                       EntityDescriptor entityDescriptor )
     {
         return new DefaultEntityState( (DefaultEntityStoreUnitOfWork) unitOfWork, identity, entityDescriptor );
     }
@@ -375,43 +373,19 @@ public class PreferencesEntityStoreMixin
                     associations.put( associationType.qualifiedName(), value );
                 }
             }
-
-            // ManyAssociations
-            Map<QualifiedName, List<EntityReference>> manyAssociations = new HashMap<QualifiedName, List<EntityReference>>();
-            if( !entityDescriptor.state().manyAssociations().isEmpty() )
-            {
-                Preferences manyAssocs = entityPrefs.node( "manyassociations" );
-                for( ManyAssociationDescriptor manyAssociationType : entityDescriptor.state().manyAssociations() )
-                {
-                    List<EntityReference> references = new ArrayList<EntityReference>();
-                    String entityReferences = manyAssocs.get( manyAssociationType.qualifiedName().name(), null );
-                    if( entityReferences == null )
-                    {
-                        // ManyAssociation not found, default to empty one
-                        manyAssociations.put( manyAssociationType.qualifiedName(), references );
-                    }
-                    else
-                    {
-                        String[] refs = entityReferences.split( "\n" );
-                        for( String ref : refs )
-                        {
-                            EntityReference value = ref == null ? null : EntityReference.parseEntityReference( ref );
-                            references.add( value );
-                        }
-                        manyAssociations.put( manyAssociationType.qualifiedName(), references );
-                    }
-                }
-            }
+            Map<QualifiedName, List<EntityReference>> manyAssociations = createManyAssociations( entityPrefs, entityDescriptor );
+            Map<QualifiedName, Map<String,EntityReference>> namedAssociations = createNamedAssociations( entityPrefs, entityDescriptor );
 
             return new DefaultEntityState( desuw,
                                            entityPrefs.get( "version", "" ),
-                                           entityPrefs.getLong( "modified", System.currentTimeMillis() ),
+                                           entityPrefs.getLong( "modified", unitOfWork.currentTime() ),
                                            identity,
                                            status,
                                            entityDescriptor,
                                            properties,
                                            associations,
-                                           manyAssociations
+                                           manyAssociations,
+                                           namedAssociations
             );
         }
         catch( JSONException e )
@@ -424,7 +398,64 @@ public class PreferencesEntityStoreMixin
         }
     }
 
-    public StateCommitter applyChanges( EntityStoreUnitOfWork unitofwork, final Iterable<EntityState> state, final String version, final long lastModified )
+    private Map<QualifiedName, List<EntityReference>> createManyAssociations( Preferences entityPrefs,
+                                                                              EntityDescriptor entityDescriptor
+    )
+    {
+        Map<QualifiedName, List<EntityReference>> manyAssociations = new HashMap<QualifiedName, List<EntityReference>>();
+        if( !entityDescriptor.state().manyAssociations().isEmpty() )
+        {
+            Preferences manyAssocs = entityPrefs.node( "manyassociations" );
+            for( AssociationDescriptor manyAssociationType : entityDescriptor.state().manyAssociations() )
+            {
+                List<EntityReference> references = new ArrayList<EntityReference>();
+                String entityReferences = manyAssocs.get( manyAssociationType.qualifiedName().name(), null );
+                if( entityReferences == null )
+                {
+                    // ManyAssociation not found, default to empty one
+                    manyAssociations.put( manyAssociationType.qualifiedName(), references );
+                }
+                else
+                {
+                    String[] refs = entityReferences.split( "\n" );
+                    for( String ref : refs )
+                    {
+                        EntityReference value = ref == null ? null : EntityReference.parseEntityReference( ref );
+                        references.add( value );
+                    }
+                    manyAssociations.put( manyAssociationType.qualifiedName(), references );
+                }
+            }
+        }
+        return manyAssociations;
+    }
+
+    private Map<QualifiedName, Map<String, EntityReference>> createNamedAssociations( Preferences entityPrefs,
+                                                                                      EntityDescriptor entityDescriptor
+    )
+        throws BackingStoreException
+    {
+        Map<QualifiedName, Map<String,EntityReference>> namedAssociations = new HashMap<QualifiedName, Map<String,EntityReference>>();
+        if( !entityDescriptor.state().namedAssociations().isEmpty() )
+        {
+            Preferences prefNode = entityPrefs.node( "namedassociations" );
+            for( AssociationDescriptor namedAssociationType : entityDescriptor.state().namedAssociations() )
+            {
+                Map<String, EntityReference> references = new HashMap<String,EntityReference>();
+                Preferences namedNodes = prefNode.node( namedAssociationType.qualifiedName().name());
+                for( String name : namedNodes.keys() )
+                {
+                    String ref = namedNodes.get( name, null );
+                    EntityReference value = ref == null ? null : EntityReference.parseEntityReference( ref );
+                    references.put( name, value );
+                    namedAssociations.put( namedAssociationType.qualifiedName(), references );
+                }
+            }
+        }
+        return namedAssociations;
+    }
+
+    public StateCommitter applyChanges( final EntityStoreUnitOfWork unitofwork, final Iterable<EntityState> state )
     {
         return new StateCommitter()
         {
@@ -440,12 +471,12 @@ public class PreferencesEntityStoreMixin
                             if( state.status().equals( EntityStatus.NEW ) )
                             {
                                 Preferences entityPrefs = root.node( state.identity().identity() );
-                                writeEntityState( state, entityPrefs, version, lastModified );
+                                writeEntityState( state, entityPrefs, unitofwork.identity(), unitofwork.currentTime() );
                             }
                             else if( state.status().equals( EntityStatus.UPDATED ) )
                             {
                                 Preferences entityPrefs = root.node( state.identity().identity() );
-                                writeEntityState( state, entityPrefs, version, lastModified );
+                                writeEntityState( state, entityPrefs, unitofwork.identity(), unitofwork.currentTime() );
                             }
                             else if( state.status().equals( EntityStatus.REMOVED ) )
                             {
@@ -581,7 +612,7 @@ public class PreferencesEntityStoreMixin
             if( !entityType.manyAssociations().isEmpty() )
             {
                 Preferences manyAssocsPrefs = entityPrefs.node( "manyassociations" );
-                for( ManyAssociationType manyAssociationType : entityType.manyAssociations() )
+                for( AssociationType manyAssociationType : entityType.manyAssociations() )
                 {
                     String manyAssocs = "";
                     ManyAssociationState manyAssoc = state.getManyAssociation( manyAssociationType.qualifiedName() );
@@ -594,6 +625,21 @@ public class PreferencesEntityStoreMixin
                         manyAssocs += entityReference.identity();
                     }
                     manyAssocsPrefs.put( manyAssociationType.qualifiedName().name(), manyAssocs );
+                }
+            }
+
+            // NamedAssociations
+            if( !entityType.namedAssociations().isEmpty() )
+            {
+                Preferences assocsNode = entityPrefs.node( "namedassociations" );
+                for( AssociationType namedAssociationType : entityType.namedAssociations() )
+                {
+                    Preferences namedNode = assocsNode.node( namedAssociationType.qualifiedName().name());
+                    NamedAssociationState namedAssoc = state.getNamedAssociation( namedAssociationType.qualifiedName() );
+                    for( NamedEntityReference namedReference : namedAssoc )
+                    {
+                        namedNode.put( namedReference.name(), namedReference.entityReference().identity() );
+                    }
                 }
             }
         }

@@ -23,7 +23,6 @@ import java.util.List;
 
 import org.qi4j.api.common.QualifiedName;
 import org.qi4j.spi.entity.association.AssociationDescriptor;
-import org.qi4j.spi.entity.association.ManyAssociationDescriptor;
 import org.qi4j.spi.property.PropertyDescriptor;
 
 /**
@@ -69,7 +68,7 @@ public final class QNameInfo
 
     private final AssociationDescriptor _associationDescriptor;
 
-    private final ManyAssociationDescriptor _manyAssociationDescriptor;
+    private final AssociationDescriptor _manyAssociationDescriptor;
 
     private QNameInfo( QualifiedName qName, //
         QNameType qNameType, //
@@ -78,7 +77,7 @@ public final class QNameInfo
         Type finalType, //
         PropertyDescriptor propertyDescriptor, //
         AssociationDescriptor associationDescriptor, //
-        ManyAssociationDescriptor manyAssociationDescriptor //
+        AssociationDescriptor manyAssociationDescriptor //
     )
     {
         if( (propertyDescriptor != null && associationDescriptor == null && manyAssociationDescriptor == null)
@@ -226,13 +225,13 @@ public final class QNameInfo
     }
 
     /**
-     * Returns {@link ManyAssociationDescriptor} associated with this many-association, if this qualified name info
+     * Returns {@link AssociationDescriptor} associated with this many-association, if this qualified name info
      * represents a many-association. Returns {@code null} otherwise.
      * 
-     * @return {@link ManyAssociationDescriptor} if this qualified name info is associated with many-association,
+     * @return {@link AssociationDescriptor} if this qualified name info is associated with many-association,
      *         {@code null} otherwise.
      */
-    public ManyAssociationDescriptor getManyAssociationDescriptor()
+    public AssociationDescriptor getManyAssociationDescriptor()
     {
         return this._manyAssociationDescriptor;
     }
@@ -304,14 +303,14 @@ public final class QNameInfo
      * @param qName The qualified name of the many-association.
      * @param tableName The table name where the values of all instances of many-association with this qualified name
      *            will be stored. May be {@code null} if it is to be decided later.
-     * @param manyAssoDescriptor {@link ManyAssociationDescriptor} of this many-association.
+     * @param manyAssoDescriptor {@link AssociationDescriptor} of this many-association.
      * @return An object representing information about many-association with this qualified name, and how instances of
      *         this many-association are stored in database.
      */
     public static QNameInfo fromManyAssociation( //
         QualifiedName qName, //
         String tableName, //
-        ManyAssociationDescriptor manyAssoDescriptor //
+        AssociationDescriptor manyAssoDescriptor //
     )
     {
         return new QNameInfo( qName, QNameType.MANY_ASSOCIATION, null, tableName, manyAssoDescriptor.type(), null,

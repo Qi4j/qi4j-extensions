@@ -8,7 +8,7 @@ import org.qi4j.entitystore.neo4j.NeoConfiguration;
 import org.qi4j.entitystore.neo4j.NeoEntityStoreService;
 import org.qi4j.library.fileconfig.FileConfiguration;
 import org.qi4j.spi.uuid.UuidIdentityGeneratorService;
-import org.qi4j.test.entity.AbstractEntityStoreTest;
+import org.qi4j.core.testsupport.AbstractEntityStoreTest;
 
 public class SimpleNeoStoreTest
         extends AbstractEntityStoreTest
